@@ -1,16 +1,28 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace ValeraProject.Models
 {
     public class Valera
     {
-        public int Health { get; private set; }
-        public int Mana { get; private set; }
-        public int Cheerfulness { get; private set; }
-        public int Fatigue { get; private set; }
-        public int Money { get; private set; }
+        [Key]
+        public int Id { get; set; }
+        
+        public int Health { get; set; }
+        public int Mana { get; set; }
+        public int Cheerfulness { get; set; }
+        public int Fatigue { get; set; }
+        public int Money { get; set; }
 
-        public Valera(int health = 100, int mana = 0, int cheerfulness = 0, int fatigue = 0, int money = 100)
+        public Valera()
+        {
+            Health = 100;
+            Mana = 0;
+            Cheerfulness = 0;
+            Fatigue = 0;
+            Money = 100;
+        }
+
+        public Valera(int health, int mana, int cheerfulness, int fatigue, int money)
         {
             Health = ValidateRange(health, 0, 100, "Health");
             Mana = ValidateRange(mana, 0, 100, "Mana");
