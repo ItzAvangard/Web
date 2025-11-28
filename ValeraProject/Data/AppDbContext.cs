@@ -13,17 +13,21 @@ namespace ValeraProject.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Valera>().HasData(
-                new Valera 
-                { 
-                    Id = 1, 
-                    Health = 100, 
-                    Mana = 0, 
-                    Cheerfulness = 0, 
-                    Fatigue = 0, 
-                    Money = 100 
-                }
-            );
+            modelBuilder.Entity<Valera>(entity =>
+            {
+                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.HasData(
+                    new Valera 
+                    { 
+                        Id = 1, 
+                        Health = 100, 
+                        Mana = 0, 
+                        Cheerfulness = 0, 
+                        Fatigue = 0, 
+                        Money = 100 
+                    }
+                );
+            });
         }
     }
 }

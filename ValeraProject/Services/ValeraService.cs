@@ -14,17 +14,41 @@ namespace ValeraProject.Services
             _context = context;
         }
 
-        public async Task<ValeraDto> GetValeraAsync(int id = 1)
+        public async Task<ValeraDto?> GetValeraAsync(int id = 1)
         {
             var valera = await _context.Valeras.FindAsync(id);
             if (valera == null)
             {
-                valera = new Valera();
-                _context.Valeras.Add(valera);
-                await _context.SaveChangesAsync();
+                return null;
             }
             
             return ToDto(valera);
+        }
+
+        public async Task<(ValeraDto valera, bool wasCreated)> PutValeraAsync(int id)
+        {
+            var existingValera = await _context.Valeras.FindAsync(id);
+            bool wasCreated = false;
+
+            if (existingValera == null)
+            {
+                var newValera = new Valera { Id = id };
+                _context.Valeras.Add(newValera);
+                await _context.SaveChangesAsync();
+                wasCreated = true;
+                return (ToDto(newValera), wasCreated);
+            }
+            else
+            {
+                var defaultValera = new Valera();
+                existingValera.Health = defaultValera.Health;
+                existingValera.Mana = defaultValera.Mana;
+                existingValera.Cheerfulness = defaultValera.Cheerfulness;
+                existingValera.Fatigue = defaultValera.Fatigue;
+                existingValera.Money = defaultValera.Money;
+                await _context.SaveChangesAsync();
+                return (ToDto(existingValera), wasCreated);
+            }
         }
 
         public async Task<ValeraDto> ExecuteActionAsync(int id, string action)
@@ -74,31 +98,15 @@ namespace ValeraProject.Services
             return ToDto(valera);
         }
 
-        public async Task<ValeraDto> ResetValeraAsync(int id = 1)
+        public async Task<bool> DeleteValeraAsync(int id = 1)
         {
             var valera = await _context.Valeras.FindAsync(id);
             if (valera == null)
-            {
-                valera = new Valera { Id = id };
-                _context.Valeras.Add(valera);
-            }
-            else
-            {
-                var newValera = new Valera();
-                UpdateValeraFromNew(valera, newValera);
-            }
+                return false;
 
+            _context.Valeras.Remove(valera);
             await _context.SaveChangesAsync();
-            return ToDto(valera);
-        }
-
-        private void UpdateValeraFromNew(Valera target, Valera source)
-        {
-            target.Health = source.Health;
-            target.Mana = source.Mana;
-            target.Cheerfulness = source.Cheerfulness;
-            target.Fatigue = source.Fatigue;
-            target.Money = source.Money;
+            return true;
         }
 
         private ValeraDto ToDto(Valera valera)

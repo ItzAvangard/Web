@@ -16,11 +16,33 @@ namespace ValeraProject.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ValeraDto>> Get()
+        public async Task<ActionResult<ValeraDto>> Get([FromQuery] int? id = null)
         {
             try
             {
-                var valera = await _valeraService.GetValeraAsync();
+                var valera = await _valeraService.GetValeraAsync(id ?? 1);
+                if (valera == null)
+                {
+                    return NotFound("Valera not found");
+                }
+                return Ok(valera);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<ValeraDto>> Put([FromQuery] int? id = null)
+        {
+            try
+            {
+                var (valera, wasCreated) = await _valeraService.PutValeraAsync(id ?? 1);
+                if (wasCreated)
+                {
+                    return CreatedAtAction(nameof(Get), new { id = valera.Id }, valera);
+                }
                 return Ok(valera);
             }
             catch (Exception ex)
@@ -30,11 +52,11 @@ namespace ValeraProject.Controllers
         }
 
         [HttpPost("action")]
-        public async Task<ActionResult<ValeraDto>> ExecuteAction([FromBody] ActionRequestDto request)
+        public async Task<ActionResult<ValeraDto>> ExecuteAction([FromBody] ActionRequestDto request, [FromQuery] int? id = null)
         {
             try
             {
-                var valera = await _valeraService.ExecuteActionAsync(1, request.Action);
+                var valera = await _valeraService.ExecuteActionAsync(id ?? 1, request.Action);
                 return Ok(valera);
             }
             catch (Exception ex)
@@ -43,13 +65,17 @@ namespace ValeraProject.Controllers
             }
         }
 
-        [HttpPost("reset")]
-        public async Task<ActionResult<ValeraDto>> Reset()
+        [HttpDelete]
+        public async Task<ActionResult> Delete([FromQuery] int? id = null)
         {
             try
             {
-                var valera = await _valeraService.ResetValeraAsync();
-                return Ok(valera);
+                var deleted = await _valeraService.DeleteValeraAsync(id ?? 1);
+                if (deleted)
+                {
+                    return NoContent();
+                }
+                return NotFound("Valera not found");
             }
             catch (Exception ex)
             {
