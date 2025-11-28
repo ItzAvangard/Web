@@ -16,20 +16,47 @@ namespace ValeraProject.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ValeraDto>> Get([FromQuery] int? id = null)
+        public async Task<ActionResult> Get([FromQuery] int? id = null)
         {
             try
             {
-                var valera = await _valeraService.GetValeraAsync(id ?? 1);
-                if (valera == null)
+                if (id.HasValue)
                 {
-                    return NotFound("Valera not found");
+                    var valera = await _valeraService.GetValeraAsync(id.Value);
+                    if (valera == null)
+                    {
+                        return NotFound("Valera not found");
+                    }
+                    return Ok(valera);
                 }
-                return Ok(valera);
+                else
+                {
+                    var valeras = await _valeraService.GetAllValerasAsync();
+                    return Ok(valeras);
+                }
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ValeraDto>> Create([FromBody] CreateValeraDto createDto)
+        {
+            try
+            {
+                if (createDto == null)
+                {
+                    return BadRequest("Request body is required");
+                }
+                
+                var valera = await _valeraService.CreateValeraAsync(createDto);
+                return CreatedAtAction(nameof(Get), new { id = valera.Id }, valera);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error creating Valera: {ex.Message}");
             }
         }
 

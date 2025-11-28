@@ -19,7 +19,8 @@ namespace ValeraProject.Data
                 entity.HasData(
                     new Valera 
                     { 
-                        Id = 1, 
+                        Id = 1,
+                        Name = "Valera",
                         Health = 100, 
                         Mana = 0, 
                         Cheerfulness = 0, 

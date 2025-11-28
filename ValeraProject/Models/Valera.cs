@@ -7,6 +7,8 @@ namespace ValeraProject.Models
         [Key]
         public int Id { get; set; }
         
+        public string Name { get; set; } = "Valera";
+        
         public int Health { get; set; }
         public int Mana { get; set; }
         public int Cheerfulness { get; set; }

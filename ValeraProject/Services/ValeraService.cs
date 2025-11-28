@@ -14,6 +14,12 @@ namespace ValeraProject.Services
             _context = context;
         }
 
+        public async Task<List<ValeraDto>> GetAllValerasAsync()
+        {
+            var valeras = await _context.Valeras.ToListAsync();
+            return valeras.Select(v => ToDto(v)).ToList();
+        }
+
         public async Task<ValeraDto?> GetValeraAsync(int id = 1)
         {
             var valera = await _context.Valeras.FindAsync(id);
@@ -21,6 +27,32 @@ namespace ValeraProject.Services
             {
                 return null;
             }
+            
+            return ToDto(valera);
+        }
+
+        public async Task<ValeraDto> CreateValeraAsync(CreateValeraDto createDto)
+        {
+            // Находим максимальный Id и добавляем 1
+            int maxId = 0;
+            if (await _context.Valeras.AnyAsync())
+            {
+                maxId = await _context.Valeras.MaxAsync(v => v.Id);
+            }
+            
+            var valera = new Valera
+            {
+                Id = maxId + 1,
+                Name = createDto.Name ?? "Valera",
+                Health = createDto.Health,
+                Mana = createDto.Mana,
+                Cheerfulness = createDto.Cheerfulness,
+                Fatigue = createDto.Fatigue,
+                Money = createDto.Money
+            };
+            
+            _context.Valeras.Add(valera);
+            await _context.SaveChangesAsync();
             
             return ToDto(valera);
         }
@@ -114,6 +146,7 @@ namespace ValeraProject.Services
             return new ValeraDto
             {
                 Id = valera.Id,
+                Name = valera.Name,
                 Health = valera.Health,
                 Mana = valera.Mana,
                 Cheerfulness = valera.Cheerfulness,
