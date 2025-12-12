@@ -10,24 +10,23 @@ namespace ValeraProject.Data
         }
 
         public DbSet<Valera> Valeras { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Valera>(entity =>
             {
                 entity.Property(e => e.Id).ValueGeneratedNever();
-                entity.HasData(
-                    new Valera 
-                    { 
-                        Id = 1,
-                        Name = "Valera",
-                        Health = 100, 
-                        Mana = 0, 
-                        Cheerfulness = 0, 
-                        Fatigue = 0, 
-                        Money = 100 
-                    }
-                );
+                entity.HasOne(v => v.User)
+                      .WithMany()
+                      .HasForeignKey(v => v.UserId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.Username).IsUnique();
             });
         }
     }

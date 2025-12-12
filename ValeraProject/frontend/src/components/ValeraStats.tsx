@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { valeraApi, ValeraDto } from '../api/valeraApi';
+import { authUtils } from '../utils/auth';
 import './ValeraStats.css';
 
 const ValeraStats: React.FC = () => {
@@ -10,6 +11,7 @@ const ValeraStats: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const user = authUtils.getUser();
 
   useEffect(() => {
     if (id) {
@@ -23,8 +25,12 @@ const ValeraStats: React.FC = () => {
       setError(null);
       const data = await valeraApi.getById(parseInt(id!));
       setValera(data);
-    } catch (err) {
-      setError('Ошибка при загрузке данных Валеры');
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError('У вас нет доступа к этой Валере');
+      } else {
+        setError(err.response?.data?.message || 'Ошибка при загрузке данных Валеры');
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -127,9 +133,12 @@ const ValeraStats: React.FC = () => {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1>{valera.name} (ID: {valera.id})</h1>
-          <button className="btn btn-secondary" onClick={() => navigate('/')}>
-            ← Назад к списку
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <span>{user?.username}</span>
+            <button className="btn btn-secondary" onClick={() => navigate('/')}>
+              ← Назад к списку
+            </button>
+          </div>
         </div>
 
         {error && (

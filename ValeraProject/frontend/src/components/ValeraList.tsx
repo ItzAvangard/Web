@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { valeraApi, ValeraDto, CreateValeraDto } from '../api/valeraApi';
+import { authUtils } from '../utils/auth';
 import './ValeraList.css';
 
 const ValeraList: React.FC = () => {
@@ -11,6 +12,8 @@ const ValeraList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const user = authUtils.getUser();
+  const isAdmin = authUtils.isAdmin();
 
   const [createForm, setCreateForm] = useState<CreateValeraDto>({
     name: 'Valera',
@@ -41,14 +44,20 @@ const ValeraList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await valeraApi.getAll();
+      // Админ видит всех Валер, обычный пользователь - только своих
+      const data = isAdmin ? await valeraApi.getAll() : await valeraApi.getMy();
       setValeras(data);
-    } catch (err) {
-      setError('Ошибка при загрузке списка Валер');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Ошибка при загрузке списка Валер');
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    authUtils.clearAuth();
+    navigate('/login');
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -103,7 +112,15 @@ const ValeraList: React.FC = () => {
   return (
     <div className="container">
       <div className="card">
-        <h1>Список Валер</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h1>Список Валер</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span>Привет, {user?.username} {isAdmin && '(Админ)'}</span>
+            <button className="btn btn-danger" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </div>
 
         <div className="search-bar">
           <input
@@ -225,6 +242,12 @@ const ValeraList: React.FC = () => {
             ))
           )}
         </div>
+        
+        {!isAdmin && (
+          <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
+            Вы видите только своих Валер. Администратор может видеть всех.
+          </p>
+        )}
       </div>
     </div>
   );

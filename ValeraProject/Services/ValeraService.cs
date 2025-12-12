@@ -20,6 +20,14 @@ namespace ValeraProject.Services
             return valeras.Select(v => ToDto(v)).ToList();
         }
 
+        public async Task<List<ValeraDto>> GetMyValerasAsync(int userId)
+        {
+            var valeras = await _context.Valeras
+                .Where(v => v.UserId == userId)
+                .ToListAsync();
+            return valeras.Select(v => ToDto(v)).ToList();
+        }
+
         public async Task<ValeraDto?> GetValeraAsync(int id = 1)
         {
             var valera = await _context.Valeras.FindAsync(id);
@@ -31,7 +39,7 @@ namespace ValeraProject.Services
             return ToDto(valera);
         }
 
-        public async Task<ValeraDto> CreateValeraAsync(CreateValeraDto createDto)
+        public async Task<ValeraDto> CreateValeraAsync(CreateValeraDto createDto, int userId)
         {
             // Находим максимальный Id и добавляем 1
             int maxId = 0;
@@ -48,7 +56,8 @@ namespace ValeraProject.Services
                 Mana = createDto.Mana,
                 Cheerfulness = createDto.Cheerfulness,
                 Fatigue = createDto.Fatigue,
-                Money = createDto.Money
+                Money = createDto.Money,
+                UserId = userId
             };
             
             _context.Valeras.Add(valera);
@@ -57,14 +66,34 @@ namespace ValeraProject.Services
             return ToDto(valera);
         }
 
-        public async Task<(ValeraDto valera, bool wasCreated)> PutValeraAsync(int id)
+        public async Task<bool> CanAccessValeraAsync(int valeraId, int userId, string userRole)
         {
+            var valera = await _context.Valeras.FindAsync(valeraId);
+            if (valera == null)
+                return false;
+
+            // Админ может получить доступ к любой Валере
+            if (userRole == "Admin")
+                return true;
+
+            // Пользователь может получить доступ только к своей Валере
+            return valera.UserId == userId;
+        }
+
+        public async Task<(ValeraDto valera, bool wasCreated)> PutValeraAsync(int id, int userId, string userRole)
+        {
+            // Проверка прав доступа
+            if (!await CanAccessValeraAsync(id, userId, userRole))
+            {
+                throw new UnauthorizedAccessException("You don't have permission to access this Valera");
+            }
+
             var existingValera = await _context.Valeras.FindAsync(id);
             bool wasCreated = false;
 
             if (existingValera == null)
             {
-                var newValera = new Valera { Id = id };
+                var newValera = new Valera { Id = id, UserId = userId };
                 _context.Valeras.Add(newValera);
                 await _context.SaveChangesAsync();
                 wasCreated = true;
@@ -83,8 +112,14 @@ namespace ValeraProject.Services
             }
         }
 
-        public async Task<ValeraDto> ExecuteActionAsync(int id, string action)
+        public async Task<ValeraDto> ExecuteActionAsync(int id, string action, int userId, string userRole)
         {
+            // Проверка прав доступа
+            if (!await CanAccessValeraAsync(id, userId, userRole))
+            {
+                throw new UnauthorizedAccessException("You don't have permission to execute actions on this Valera");
+            }
+
             var valera = await _context.Valeras.FindAsync(id);
             if (valera == null)
                 throw new ArgumentException("Valera not found");
@@ -130,8 +165,14 @@ namespace ValeraProject.Services
             return ToDto(valera);
         }
 
-        public async Task<bool> DeleteValeraAsync(int id = 1)
+        public async Task<bool> DeleteValeraAsync(int id = 1, int userId = 0, string userRole = "User")
         {
+            // Проверка прав доступа
+            if (!await CanAccessValeraAsync(id, userId, userRole))
+            {
+                throw new UnauthorizedAccessException("You don't have permission to delete this Valera");
+            }
+
             var valera = await _context.Valeras.FindAsync(id);
             if (valera == null)
                 return false;

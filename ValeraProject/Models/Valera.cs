@@ -14,6 +14,9 @@ namespace ValeraProject.Models
         public int Cheerfulness { get; set; }
         public int Fatigue { get; set; }
         public int Money { get; set; }
+        
+        public int? UserId { get; set; }
+        public User? User { get; set; }
 
         public Valera()
         {
